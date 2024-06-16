@@ -1,0 +1,7 @@
+secrets.toml
+.env
+data/
+__pycache__/
+.idea/
+scratch/
+.DS_Store
