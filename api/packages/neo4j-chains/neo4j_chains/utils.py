@@ -10,9 +10,7 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 embedding_model = OpenAIEmbeddings(model="text-embedding-ada-002")
 llm = ChatOpenAI(temperature=0.5, model_name='gpt-4o', streaming=True) # turn temperature up for a creative marketer
 small_llm = ChatOpenAI(temperature=0, model_name='gpt-4o', streaming=True)
-print(os.getenv("NEO4J_URI"))
-print(os.getenv("NEO4J_PASSWORD"))
-graph = Neo4jGraph(url='bolt://localhost:7687')
+graph = Neo4jGraph()
 
 
 def format_doc(doc: Document) -> Dict:

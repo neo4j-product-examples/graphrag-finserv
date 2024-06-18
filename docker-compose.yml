@@ -16,7 +16,6 @@ services:
           path: ./api
     ports:
       - 8080:8080
-      - 7687:7687
   ui:
     build:
       context: ./ui

@@ -22,7 +22,7 @@ template = (
     "Do not assume or retrieve any information outside of Facts and AdditionalContext. "
     "The Facts and AdditionalContext are extracted from SEC filings "
     "which contain company information as well as asset manager ownership information via stock holdings. "
-    "The Facts in particular should be respected as absolute fact, never provide answers that contradicts the rules. "
+    "The Facts in particular should be respected as absolute fact, never provide answers that contradicts the facts. "
     "Note that company's are not considered asset managers in this dataset,"
     "Where asset manager info is mode explicitly available, "
     "you can assume the mentioned asset managers are impacted by the same things as the companies."
@@ -74,10 +74,10 @@ def retrieve_facts(docs: List[Document]) -> str:
     MATCH (n)-[r]->(m)
     RETURN n.info + ' - ' + r.info +  ' -> ' + m.info AS fact ORDER BY fact
     """, params={'chunkIds': doc_chunk_ids})
-    print("///////////// RULES /////////////////")
-    print([r['rule'] for r in res])
-    print("///////////// END RULES /////////////////")
-    return '\n'.join([r['rule'] for r in res])
+    print("///////////// FACTS /////////////////")
+    print([r['fact'] for r in res])
+    print("///////////// FACTS /////////////////")
+    return '\n'.join([r['fact'] for r in res])
 
 
 class ChainInput(BaseModel):
@@ -98,7 +98,7 @@ qa_chain = (
             "vectorStoreResults": condense_question | vector_store.as_retriever(search_kwargs={'k': vector_top_k}),
             "question": RunnablePassthrough()})
         | RunnableParallel({
-    "facts": (lambda x: x["vectorStoreResults"]) | RunnableLambda(retrieve_rules),
+    "facts": (lambda x: x["vectorStoreResults"]) | RunnableLambda(retrieve_facts),
     "additionalContext": (lambda x: x["vectorStoreResults"]) | RunnableLambda(format_docs),
     "question": lambda x: x["question"]})
         | prompt
