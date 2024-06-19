@@ -15,6 +15,8 @@ COPY requirements.txt .
 RUN pip install --upgrade -r requirements.txt
 
 COPY home.py .
+COPY pages/ pages/
+COPY images/ images/
 COPY .streamlit/ .streamlit/
 
 EXPOSE 8501

@@ -61,14 +61,14 @@ def retrieve_facts(docs: List[Document]) -> str:
     doc_chunk_ids = [doc.metadata['id'] for doc in docs]
     res = graph.query("""
     UNWIND $chunkIds AS chunkId
-    MATCH(chunk {id:chunkId})-[:HAS_ENTITY]->()-[rl:!HAS_ENTITY]-{1,5}()
+    MATCH(chunk {id:chunkId})-[:HAS_ENTITY]->()-[rl:!HAS_ENTITY]-{1,3}()
     UNWIND rl AS r
     WITH DISTINCT r
     MATCH (n)-[r]->(m)
     RETURN n.id + ' - ' + type(r) +  ' -> ' + m.id AS fact ORDER BY fact
     UNION ALL
     UNWIND $chunkIds AS chunkId
-    MATCH(chunk {id:chunkId})-[:PART_OF]->(:Document)<-[:HAS_DOCUMENT]-()-[rl:!HAS_DOCUMENT]-{1,2}()
+    MATCH(chunk {id:chunkId})-[:PART_OF]->(:Document)<-[:HAS_DOCUMENT]-()-[rl:!HAS_DOCUMENT]-{1}()
     UNWIND rl AS r
     WITH DISTINCT r
     MATCH (n)-[r]->(m)
@@ -98,10 +98,42 @@ qa_chain = (
             "vectorStoreResults": condense_question | vector_store.as_retriever(search_kwargs={'k': vector_top_k}),
             "question": RunnablePassthrough()})
         | RunnableParallel({
-    "facts": (lambda x: x["vectorStoreResults"]) | RunnableLambda(retrieve_facts),
-    "additionalContext": (lambda x: x["vectorStoreResults"]) | RunnableLambda(format_docs),
-    "question": lambda x: x["question"]})
+        "facts": (lambda x: x["vectorStoreResults"]) | RunnableLambda(retrieve_facts),
+        "additionalContext": (lambda x: x["vectorStoreResults"]) | RunnableLambda(format_docs),
+        "question": lambda x: x["question"]})
         | prompt
+        | llm
+        | StrOutputParser()
+).with_types(input_type=ChainInput, output_type=Output)
+
+vector_only_template = (
+    "You are a financial expert responsible for answering user questions about companies and asset managers."
+    "Answer the question based only on the below context. "
+    "Do not assume or retrieve any information outside of context. "
+    "The context is extracted from SEC filings "
+    "which contains company information. "
+    "Note that company's are not considered asset managers in this dataset,"
+    "Where asset manager info is mode explicitly available, "
+    "you can assume the mentioned asset managers are impacted by the same things as the companies."
+
+    """
+     
+    # Context
+    {context}
+    
+    # Question: 
+    {question}
+        
+    # Answer:
+    """)
+
+vector_only_prompt = ChatPromptTemplate.from_template(vector_only_template)
+qa_chain_vector_only = (
+        RunnableParallel({
+            "context": condense_question | vector_store.as_retriever(
+                search_kwargs={'k': vector_top_k}) | RunnableLambda(format_docs),
+            "question": RunnablePassthrough()})
+        | vector_only_prompt
         | llm
         | StrOutputParser()
 ).with_types(input_type=ChainInput, output_type=Output)
