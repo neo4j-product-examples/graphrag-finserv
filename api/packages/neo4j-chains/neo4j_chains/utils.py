@@ -17,7 +17,8 @@ def format_doc(doc: Document) -> Dict:
     res = OrderedDict()
     res['text'] = doc.page_content
     res.update(doc.metadata)
-    return res
+    clean_res = remove_keys_from_dict(res, ['embedding', 'openAIEmbedding'])
+    return clean_res
 
 
 def format_docs(docs: List[Document]) -> str:

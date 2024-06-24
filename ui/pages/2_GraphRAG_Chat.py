@@ -42,7 +42,7 @@ if st.session_state["generated"]:
 async def get_agent_response(
         input: str, stream_handler: StreamHandler, chat_history: Optional[List[Tuple]] = []
 ):
-    url = "http://api:8080/assistant/"
+    url = "http://api:8080/chat/"
     st.session_state["generated"].append("")
     remote_runnable = RemoteRunnable(url)
     async for data in remote_runnable.astream({"input": input, "chat_history": chat_history}):
@@ -64,7 +64,7 @@ def generate_history():
 
 
 # Accept user input
-prompt = st.chat_input("How can I help you with Marketing today?")
+prompt = st.chat_input("How can I help you with SEC data today?")
 if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)

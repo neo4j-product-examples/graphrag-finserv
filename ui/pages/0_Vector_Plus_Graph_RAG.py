@@ -1,4 +1,5 @@
 import asyncio
+import json
 from typing import Dict
 
 import streamlit as st
@@ -46,17 +47,14 @@ class StreamHandler:
 
 async def get_chain_response(input: str, url: str, stream_handler: StreamHandler):
     remote_runnable = RemoteRunnable(url)
-    async for data in remote_runnable.astream({"input": input, "chat_history": []}):
+    async for data in remote_runnable.astream(input):
         stream_handler.new_token(data)
 
 
 def generate_response(input: str, use_graphrag: bool = False):
-    #TODO: Creater and use more efficient completion (no chat) endpoints
-    #url = "http://api:8080/qa-baseline/"
-    url = "http://api:8080/assistant-vector-only/"
+    url = "http://api:8080/completion-vector-only/"
     if use_graphrag:
-        #url = "http://api:8080/qa-graphrag/"
-        url = "http://api:8080/assistant/"
+        url = "http://api:8080/completion/"
     stream_handler = StreamHandler(st.empty())
     # Create an event loop: this is needed to run asynchronous functions
     loop = asyncio.new_event_loop()
@@ -67,16 +65,40 @@ def generate_response(input: str, use_graphrag: bool = False):
     loop.close()
 
 
+def format_json_context(context, use_graphrag: bool = False):
+    if use_graphrag:
+        facts = json.dumps(context["facts"].split("\n"), indent=1)
+        context_json_str = f'{{"documentContext":{context["additionalContext"]}, "graphFacts":{facts}}}'
+    else:
+        context_json_str = context['context']
+    return context_json_str
+
+
+def get_context(input: str, use_graphrag: bool = False):
+    url = "http://api:8080/completion-context-vector-only/"
+    if use_graphrag:
+        url = "http://api:8080/completion-context/"
+    remote_runnable = RemoteRunnable(url)
+    response = remote_runnable.invoke(input)
+    print(response)
+    return format_json_context(response, use_graphrag)
+
+
 if prompt:
     with col1:
         status = st.status("Generating response 🤖")
-        generate_response(prompt, False)
+        with st.expander('__Response:__', True):
+            generate_response(prompt, False)
         status.update(label="Finished!", state="complete", expanded=False)
+        with st.expander("__Context used to answer this prompt:__"):
+            st.json(get_context(prompt, False))
     with col2:
         status = st.status("Generating response 🤖")
-        generate_response(prompt, True)
+        with st.expander('__Response:__', True):
+            generate_response(prompt, True)
         status.update(label="Finished!", state="complete", expanded=False)
-
+        with st.expander("__Context used to answer this prompt:__"):
+            st.json(get_context(prompt, True))
 st.markdown("---")
 
 st.markdown("""

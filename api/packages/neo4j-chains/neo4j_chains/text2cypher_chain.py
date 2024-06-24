@@ -61,7 +61,7 @@ ${context}
 """
 
 def format_context(docs) -> str:
-    docs = remove_keys_from_dict(docs, ['embedding'])
+    docs = remove_keys_from_dict(docs, ['embedding', 'openAIEmbedding'])
     print(docs)
     res = json.dumps(docs, indent=1, default=str)
     return res
