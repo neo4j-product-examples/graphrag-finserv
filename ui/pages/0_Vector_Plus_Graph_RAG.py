@@ -17,7 +17,7 @@ prompt = st.text_input("Ask a question about SEC data", value="")
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("### Baseline RAG (vector only)")
-    with st.expander("Vector only search can lack full context:"):
+    with st.expander("Vector-only search can lack full context:"):
         vec_only = Image.open('./images/vector-only.png')
         st.markdown("#### Relationships are ignored")
         st.image(vec_only)
@@ -80,25 +80,22 @@ def get_context(input: str, use_graphrag: bool = False):
         url = "http://api:8080/completion-context/"
     remote_runnable = RemoteRunnable(url)
     response = remote_runnable.invoke(input)
-    print(response)
     return format_json_context(response, use_graphrag)
 
 
 if prompt:
     with col1:
-        status = st.status("Generating response 🤖")
-        with st.expander('__Response:__', True):
-            generate_response(prompt, False)
-        status.update(label="Finished!", state="complete", expanded=False)
-        with st.expander("__Context used to answer this prompt:__"):
-            st.json(get_context(prompt, False))
+        with st.spinner('Running Vector-Only RAG...'):
+            with st.expander('__Response:__', True):
+                generate_response(prompt, False)
+            with st.expander("__Context used to answer this prompt:__"):
+                st.json(get_context(prompt, False))
     with col2:
-        status = st.status("Generating response 🤖")
-        with st.expander('__Response:__', True):
-            generate_response(prompt, True)
-        status.update(label="Finished!", state="complete", expanded=False)
-        with st.expander("__Context used to answer this prompt:__"):
-            st.json(get_context(prompt, True))
+        with st.spinner('Running GraphRAG...'):
+            with st.expander('__Response:__', True):
+                generate_response(prompt, True)
+            with st.expander("__Context used to answer this prompt:__"):
+                st.json(get_context(prompt, True))
 st.markdown("---")
 
 st.markdown("""
