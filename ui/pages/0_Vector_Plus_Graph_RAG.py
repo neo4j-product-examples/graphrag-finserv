@@ -84,18 +84,22 @@ def get_context(input: str, use_graphrag: bool = False):
 
 
 if prompt:
-    with col1:
+    col11, col12 = st.columns(2)
+    with col11:
         with st.spinner('Running Vector-Only RAG...'):
             with st.expander('__Response:__', True):
                 generate_response(prompt, False)
-            with st.expander("__Context used to answer this prompt:__"):
-                st.json(get_context(prompt, False))
-    with col2:
+    with col12:
         with st.spinner('Running GraphRAG...'):
             with st.expander('__Response:__', True):
                 generate_response(prompt, True)
-            with st.expander("__Context used to answer this prompt:__"):
-                st.json(get_context(prompt, True))
+    col21, col22 = st.columns(2)
+    with col21:
+        with st.expander("__Context used to answer this prompt:__"):
+            st.json(get_context(prompt, False))
+    with col22:
+        with st.expander("__Context used to answer this prompt:__"):
+            st.json(get_context(prompt, True))
 st.markdown("---")
 
 st.markdown("""
